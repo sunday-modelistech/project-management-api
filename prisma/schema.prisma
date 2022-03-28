@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CategorieDonnee {
+  categorie_donnee_id Int      @id(map: "pk_categorie_donnee") @default(autoincrement())
+  libelle             String?  @db.VarChar(200)
+  slug                String?  @db.VarChar(100)
+  date_creation       DateTime @default(now()) @db.Timestamp(6)
+  donnee              Donnee[]
+}
+
+model DirectionRe {
+  direction_re_id Int                      @id(map: "pk_direction_re") @default(autoincrement())
+  nom             String?                  @db.VarChar(200)
+  slug            String?                  @db.VarChar(100)
+  date_creation   DateTime                 @default(now()) @db.Timestamp(6)
+  dre_donnee      DirectionReDonnee[]
+  utilisateur_dre UtilisateurDirectionRe[]
+}
+
+model Donnee {
+  donnee_id             Int                 @id(map: "pk_donnee") @default(autoincrement())
+  libelle               String?             @db.VarChar(200)
+  slug                  String?             @db.VarChar(100)
+  urlpath               String?             @db.VarChar(200)
+  code_categorie_donnee Int
+  code_format_donnee    Int
+  date_creation         DateTime            @default(now()) @db.Timestamp(6)
+  categorie_donnee      CategorieDonnee     @relation(fields: [code_categorie_donnee], references: [categorie_donnee_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_donnee_categorie_donnee")
+  format_donnee         FormatDonnee        @relation(fields: [code_format_donnee], references: [format_donnee_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_donnee_format_donnee")
+  dre_donnee            DirectionReDonnee[]
+
+  @@index([code_categorie_donnee], map: "idx_donnee_categorie_donnee")
+  @@index([code_format_donnee], map: "idx_donnee_format_donnee")
+}
+
+model DirectionReDonnee {
+  dre_donnee_id     Int         @id(map: "pk_dre_donnee") @default(autoincrement())
+  code_donnee       Int
+  code_direction_re Int
+  date_creation     DateTime    @default(now()) @db.Timestamp(6)
+  direction_re      DirectionRe @relation(fields: [code_direction_re], references: [direction_re_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_dre_donnee_direction_re")
+  donnee            Donnee      @relation(fields: [code_donnee], references: [donnee_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_dre_donnee_donnee")
+
+  @@index([code_direction_re], map: "idx_dre_donnee_direction_re")
+  @@index([code_donnee], map: "idx_dre_donnee_donnee")
+}
+
+model FormatDonnee {
+  format_donnee_id Int      @id(map: "pk_format_donnee") @default(autoincrement())
+  libelle          String?  @db.VarChar(200)
+  slug             String?  @db.VarChar(100)
+  date_creation    DateTime @default(now()) @db.Timestamp(6)
+  donnee           Donnee[]
+}
+
+model Role {
+  role_id       Int           @id(map: "pk_role") @default(autoincrement())
+  nom           String?       @db.VarChar(200)
+  slug          String?       @db.VarChar(100)
+  date_creation DateTime      @default(now()) @db.Timestamp(6)
+  utilisateur   Utilisateur[]
+}
+
+model Utilisateur {
+  utilisateur_id  Int                      @id(map: "pk_utilisateur") @default(autoincrement())
+  nom             String?                  @db.VarChar(200)
+  login           String?                  @db.VarChar(100)
+  password        String?                  @db.VarChar(100)
+  phone_number    String?                  @db.VarChar(200)
+  email           String?                  @db.VarChar(200)
+  actif           Boolean?                 @default(false)
+  code_role       Int
+  date_creation   DateTime                 @default(now()) @db.Timestamp(6)
+  role            Role                     @relation(fields: [code_role], references: [role_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_utilisateur_role")
+  utilisateur_dre UtilisateurDirectionRe[]
+
+  @@index([code_role], map: "idx_utilisateur_role")
+}
+
+model UtilisateurDirectionRe {
+  utilisateur_dre_id Int         @id(map: "pk_utilisateur_dre") @default(autoincrement())
+  code_utilisateur   Int
+  code_direction_re  Int
+  actif              Boolean?    @default(false)
+  date_creation      DateTime    @default(now()) @db.Timestamp(6)
+  direction_re       DirectionRe @relation(fields: [code_direction_re], references: [direction_re_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_utilisateur_dre_direction_re")
+  utilisateur        Utilisateur @relation(fields: [code_utilisateur], references: [utilisateur_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_utilisateur_dre_utilisateur")
+
+  @@index([code_direction_re], map: "idx_utilisateur_dre_direction_re")
+  @@index([code_utilisateur], map: "idx_utilisateur_dre_utilisateur")
+}
